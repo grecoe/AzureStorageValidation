@@ -15,7 +15,7 @@ This utility is designed to be used to validate those Azure Storage files to ens
     - [exampleinput.json](exampleinputjson)
 - [Usage](#usage)
     - [Prerequisites](#prerequisites)
-    - [Injest](#injest)
+    - [Ingest](#ingest)
     - [Validation](#validation)
     - [Rebase](#rebase)
 
@@ -35,8 +35,8 @@ The storage table that is tracking this information may or may not be in the sam
 
 In general, as a user you will perform the actions in this order from top top bottom. You will revisit the second and third steps fairly regularly and the first step very infrequently if at all after the first run. 
 
-- Injest a batch of blob information into the storage table. 
-    - Injesting the same file has the same effect as a rebase.
+- Ingest a batch of blob information into the storage table. 
+    - Ingesting the same file has the same effect as a rebase.
     - This step is used to seed the storage table, or add to the entries. 
 - Validate that the files that have been recorded in the storage table still have the same MD5 hash in the storage account.
     - This step is used to ensure that your blobs have not changed since you put them in or last validated your service/product. This should be run each time before performing a deployment/install. 
@@ -112,11 +112,11 @@ conda env create -f environment.yml
 ```
 - A list of blobs you want to track, modify the exampleinput.json file with your settings. 
 
-## Injest
-Injest information about a set of azure blobs from a given storage account in a given subscription (in which your login has access to).
+## Ingest
+Ingest information about a set of azure blobs from a given storage account in a given subscription (in which your login has access to).
 
 ```
-python app.py -injest -settings "./exampleinput.json"
+python app.py -ingest -settings "./exampleinput.json"
 ```
 
 ## Validation

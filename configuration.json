@@ -1,0 +1,15 @@
+{
+    "historyStorage" : {
+        "account": "STG_ACCT_NAME_SECURE_TABLE",
+        "subscription" : "SUBSCRIPTION_ID_STG",
+        "table" : "DESIRED_TABLE_NAME"
+    },
+    "industries" : [
+        "list",
+        "of",
+        "industries",
+        "or",
+        "other",
+        "filter"
+    ]
+}

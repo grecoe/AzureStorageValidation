@@ -1,0 +1,8 @@
+{
+    "account" : "STG_ACCT_NAME",
+    "subscription" : "SUBSCRIPTION_ID_STG",
+    "industry" : "FROM_CONFIG_JSON",
+    "blobs" :[
+        "LIST OF BLOBS TO INPUT"
+    ]
+}
