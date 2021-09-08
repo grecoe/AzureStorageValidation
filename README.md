@@ -20,7 +20,7 @@ This utility is designed to be used to validate those Azure Storage files to ens
     - [Rebase](#rebase)
 
 # Architecture
-![alt text](./images/architecture.jpg)
+![alt text](./images/stgarchitecture.jpg)
 
 The project is a simple Python project that is supplied with different configurations to support different scenarios. 
 
