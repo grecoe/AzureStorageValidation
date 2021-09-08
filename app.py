@@ -15,29 +15,12 @@ python app.py -rebase -industry INDUSTRY_OR_FILTER_IN_CONFIG_JSON
 import sys
 from microsoft.utils import (
     AzLoginUtils, 
-    AzCliStorageUtil,
-    AzureTableStoreUtil,
-    AzureBlobStorageUtils,
     Configuration,
     ProgramArguments,
-    StorageBlobValidationEntry
+    StorageBlobValidationEntry,
+    Context
 )
 
-def get_current_hash(existing_entry: StorageBlobValidationEntry) -> str:
-    return get_blob_hash(
-        existing_entry.account,
-        existing_entry.subscription,
-        existing_entry.blob
-    )
-
-def get_blob_hash(account: str, subscription: str, blob: str):
-    blob_storage = AzCliStorageUtil.get_storage_account(
-        account,
-        subscription) 
-                 
-    stgutil = AzureBlobStorageUtils(blob_storage.name, blob_storage.keys[0])
-
-    return stgutil.get_blob_hash(blob)
 
 # Load configuration and validate that we have a login
 credentials_file = ".\\credentials.json"
@@ -55,16 +38,7 @@ if app_arguments.industry:
         print(configuration.industries)
         quit()
 
-# Regardless what we are going to do, we will need the validation
-# storage table to read or update
-validation_storage_account = AzCliStorageUtil.get_storage_account(
-    configuration.historyStorage["account"],
-    configuration.historyStorage["subscription"])
-
-validation_table_store = AzureTableStoreUtil(
-    validation_storage_account.name, 
-    validation_storage_account.keys[0]
-)
+application_context = Context(configuration)
 
 
 # Now figure out what it is we are doing.
@@ -77,16 +51,13 @@ if app_arguments.validate:
     """
     print("\nValidating current hashes for industry", app_arguments.industry)
 
-    results = validation_table_store.search_industry(
-        configuration.historyStorage["table"], 
-        app_arguments.industry
-        )
-    
+    results = application_context.search_table_store(app_arguments.industry)
+
     print("Found", len(results), "records for", app_arguments.industry)
 
     if results and len(results) > 0:
         for res in results:
-            current_hash = get_current_hash(res)
+            current_hash = application_context.get_current_hash(res)
             valid = current_hash == res.md5
             print("Validation for", res.blob,"=", valid)
 
@@ -97,21 +68,18 @@ if app_arguments.rebase:
     """
     print("\nRebasing hashes for industry", app_arguments.industry)
 
-    results = validation_table_store.search_industry(
-        configuration.historyStorage["table"], 
-        app_arguments.industry
-        )
-    
+    results = application_context.search_table_store(app_arguments.industry)
+
     print("Found", len(results), "records for", app_arguments.industry)
 
     if results and len(results) > 0:
         for res in results:
-            current_hash = get_current_hash(res)
+            current_hash = application_context.get_current_hash(res)
             
             if current_hash != res.md5:
                 print("Updating hash for", res.blob)
                 res.md5 = current_hash
-                validation_table_store.add_record(res.table_name, res.get_entity())
+                application_context.add_table_record(res)
             else:
                 print("Unchanged hash for", res.blob)
 
@@ -134,10 +102,7 @@ if app_arguments.ingest:
         print(configuration.industries)
 
     # Get existing ones so we don't create duplicates
-    results = validation_table_store.search_industry(
-        configuration.historyStorage["table"], 
-        ingest_settings.industry
-        )
+    results = application_context.search_table_store(ingest_settings.industry)
 
     print("Ingesting blobs for ", ingest_settings.industry, "in", ingest_settings.account )
 
@@ -151,7 +116,7 @@ if app_arguments.ingest:
 
         print("\nEntry for", blob,"in", ingest_settings.account, "exists:" , existing_entry != None)
 
-        blob_hash = get_blob_hash(
+        blob_hash = application_context.get_blob_hash(
             ingest_settings.account,
             ingest_settings.subscription,
             blob
@@ -161,7 +126,7 @@ if app_arguments.ingest:
             if existing_entry.md5 != blob_hash: 
                 print("Updating hash for", blob)
                 existing_entry.md5 = blob_hash
-                validation_table_store.add_record(existing_entry.table_name, existing_entry.get_entity())
+                application_context.add_table_record(existing_entry)
             else:
                 print("Hash for", blob, "in", ingest_settings.account, "unchanged.")
         else:
@@ -175,10 +140,6 @@ if app_arguments.ingest:
             blob_entry.actor = script_actor
 
             print("Adding entry for", blob, "in", ingest_settings.account)
-            validation_table_store.add_record(
-                configuration.historyStorage["table"],
-                blob_entry.get_entity()
-            )
-
+            application_context.add_table_record(blob_entry)
 
 print("Tasks complete!")
