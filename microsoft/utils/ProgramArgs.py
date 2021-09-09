@@ -1,6 +1,7 @@
 import sys
 import os
 import argparse
+import typing
 
 class ProgramArguments:
     def __init__(self, args:list):
@@ -32,6 +33,14 @@ class ProgramArguments:
     @property
     def ingest(self):
         return self.arguments.ingest
+
+    def validate_industry(self, industries: typing.List[str]):
+        if self.industry:
+            if self.industry not in industries:
+                print("The only acceptable industries are:")
+                print(industries)
+                quit()
+
 
     def validate_args(self):
         count = 0

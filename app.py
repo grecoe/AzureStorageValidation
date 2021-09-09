@@ -29,14 +29,10 @@ configuration_file = ".\\configuration.json"
 configuration = Configuration(configuration_file)
 script_actor = AzLoginUtils.validate_login(credentials_file)
 
-# Collect the arguments and validate them
+# Collect the arguments, validate them and create context object
 app_arguments = ProgramArguments(sys.argv[1:])
 app_arguments.validate_args()
-if app_arguments.industry:
-    if app_arguments.industry not in configuration.industries:
-        print("The only acceptable industries are:")
-        print(configuration.industries)
-        quit()
+app_arguments.validate_industry(configuration.industries)
 
 application_context = Context(configuration)
 
@@ -51,15 +47,12 @@ if app_arguments.validate:
     """
     print("\nValidating current hashes for industry", app_arguments.industry)
 
-    results = application_context.search_table_store(app_arguments.industry)
+    results = application_context.get_industry_validation_result(app_arguments.industry)
 
     print("Found", len(results), "records for", app_arguments.industry)
-
-    if results and len(results) > 0:
+    if len(results):
         for res in results:
-            current_hash = application_context.get_current_hash(res)
-            valid = current_hash == res.md5
-            print("Validation for", res.blob,"=", valid)
+            print("Validation result: ", res.validation_entry.blob, "=", res.validated)
 
 if app_arguments.rebase:
     """
@@ -68,20 +61,17 @@ if app_arguments.rebase:
     """
     print("\nRebasing hashes for industry", app_arguments.industry)
 
-    results = application_context.search_table_store(app_arguments.industry)
+    results = application_context.get_industry_validation_result(app_arguments.industry)
 
     print("Found", len(results), "records for", app_arguments.industry)
-
-    if results and len(results) > 0:
+    if len(results):
         for res in results:
-            current_hash = application_context.get_current_hash(res)
-            
-            if current_hash != res.md5:
-                print("Updating hash for", res.blob)
-                res.md5 = current_hash
-                application_context.add_table_record(res)
+            if not res.validated:
+                print("Update hash for", res.validation_entry.blob)
+                res.validation_entry.md5 = res.current_hash
+                application_context.add_table_record(res.validation_entry)
             else:
-                print("Unchanged hash for", res.blob)
+                print("Hash unchanged for", res.validation_entry.blob)
 
 if app_arguments.ingest:
     """

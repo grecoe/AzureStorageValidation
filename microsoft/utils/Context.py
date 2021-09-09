@@ -7,6 +7,12 @@ from . import (
     AzureTableStoreUtil
 )
 
+class BlobValidationResult:
+    def __init__(self, entry:StorageBlobValidationEntry):
+        self.validation_entry = entry
+        self.current_hash = None
+        self.validated = False
+
 class Context:
     def __init__(self, config: Configuration):
         self.configuration = config
@@ -20,6 +26,24 @@ class Context:
             self.validation_storage_account.keys[0]
         )
 
+    def get_industry_validation_result(self, industry: str) -> typing.List[BlobValidationResult]:
+        return_value = []
+        results = self.search_table_store(industry)
+
+        if results and len(results) > 0:
+            print("Found",len(results), "results for", industry)
+            for res in results:
+                validation_result = BlobValidationResult(res)
+                validation_result.current_hash = self.get_current_hash(res)
+                validation_result.validated = validation_result.current_hash == res.md5
+
+                return_value.append(validation_result)
+            else:
+                print("Found 0 results for", industry)
+
+
+        return return_value
+
     def search_table_store(self, industry:str) -> typing.List[StorageBlobValidationEntry]:
         return self.validation_table_store.search_industry(
             self.configuration.historyStorage["table"], 
@@ -31,7 +55,7 @@ class Context:
 
         if not table:
             table = self.configuration.historyStorage["table"]
-            
+
         self.validation_table_store.add_record(
                 table,
                 entry.get_entity()
