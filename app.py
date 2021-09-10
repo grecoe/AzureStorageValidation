@@ -69,6 +69,10 @@ if app_arguments.rebase:
             if not res.validated:
                 print("Update hash for", res.validation_entry.blob)
                 res.validation_entry.md5 = res.current_hash
+                res.validation_entry.actor = script_actor
+                res.validation_entry.history.append(
+                    application_context.get_history_entry("rebase", script_actor)
+                )
                 application_context.add_table_record(res.validation_entry)
             else:
                 print("Hash unchanged for", res.validation_entry.blob)
@@ -116,6 +120,10 @@ if app_arguments.ingest:
             if existing_entry.md5 != blob_hash: 
                 print("Updating hash for", blob)
                 existing_entry.md5 = blob_hash
+                existing_entry.actor = script_actor
+                existing_entry.history.append(
+                    application_context.get_history_entry("create_rebase", script_actor)
+                )
                 application_context.add_table_record(existing_entry)
             else:
                 print("Hash for", blob, "in", ingest_settings.account, "unchanged.")
@@ -128,6 +136,9 @@ if app_arguments.ingest:
             blob_entry.industry = ingest_settings.industry
             blob_entry.md5 = blob_hash
             blob_entry.actor = script_actor
+            blob_entry.history.append(
+                    application_context.get_history_entry("create", script_actor)
+                )
 
             print("Adding entry for", blob, "in", ingest_settings.account)
             application_context.add_table_record(blob_entry)

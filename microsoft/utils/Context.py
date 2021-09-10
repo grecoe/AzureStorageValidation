@@ -1,3 +1,4 @@
+import datetime
 import typing
 from . import (
     Configuration,
@@ -49,6 +50,14 @@ class Context:
             self.configuration.historyStorage["table"], 
             industry
             )
+
+    def get_history_entry(self, activity: str, actor:str):
+        return {
+            "timestamp" : datetime.datetime.utcnow().isoformat(),
+            "activity" : activity,
+            "actor" : actor
+        }      
+
 
     def add_table_record(self, entry: StorageBlobValidationEntry):
         table = entry.table_name

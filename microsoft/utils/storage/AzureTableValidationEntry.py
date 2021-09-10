@@ -1,3 +1,4 @@
+import json
 import datetime
 
 class ProcessEntry:
@@ -14,7 +15,10 @@ class ProcessEntry:
         entity = {}
         for prop in self.__dict__:
             if prop != 'table_name':
-                entity[prop] = self.__dict__[prop]
+                prop_to_write = self.__dict__[prop] 
+                if not isinstance(prop_to_write, str):
+                    prop_to_write = json.dumps(prop_to_write)
+                entity[prop] = prop_to_write
 
         return entity
 
@@ -27,6 +31,7 @@ class StorageBlobValidationEntry(ProcessEntry):
         self.subscription = None
         self.blob = blob_name
         self.actor = None
+        self.history = []
 
     @staticmethod
     def create_from_record(table:str, settings:dict) -> object:
@@ -38,5 +43,9 @@ class StorageBlobValidationEntry(ProcessEntry):
         return_val.subscription = settings["subscription"]
         return_val.blob = settings["blob"]
         return_val.actor = settings["actor"]
+
+        return_val.history = settings["history"]
+        if return_val.history:
+            return_val.history = json.loads(return_val.history)
 
         return return_val
